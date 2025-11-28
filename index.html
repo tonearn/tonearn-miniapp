@@ -13,10 +13,11 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
             min-height: 100vh;
             padding: 20px;
+            padding-bottom: 80px; /* Место для нижнего меню */
         }
         
         .container {
@@ -26,22 +27,24 @@
         }
         
         .card {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             color: #333;
             border-radius: 20px;
             padding: 30px;
             margin: 20px 0;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid #FFD700;
         }
         
         h1 {
             margin-bottom: 20px;
-            color: #667eea;
+            color: #B8860B;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
         
         .btn {
-            background: #667eea;
-            color: white;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
             border: none;
             padding: 15px 20px;
             border-radius: 12px;
@@ -49,112 +52,323 @@
             cursor: pointer;
             width: 100%;
             margin: 10px 0;
-            transition: background 0.3s;
+            transition: transform 0.2s;
+            font-weight: bold;
         }
         
         .btn:hover {
-            background: #5a6fd8;
+            transform: translateY(-2px);
         }
         
         .user-info {
-            background: #f8f9fa;
+            background: #FFF8DC;
             padding: 15px;
             border-radius: 10px;
             margin: 15px 0;
             text-align: left;
+            border: 1px solid #FFD700;
         }
         
-        .deposit-info {
-            background: #e7f3ff;
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: #FFF8DC;
             padding: 15px;
             border-radius: 10px;
-            margin: 15px 0;
+            text-align: center;
+            border: 1px solid #FFD700;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #B8860B;
+            font-size: 18px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 2px solid #FFD700;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-item {
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .nav-item.active {
+            background: #FFF8DC;
+            color: #B8860B;
+            font-weight: bold;
+        }
+        
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+        }
+        
+        .tab-content {
             display: none;
         }
         
-        .wallet-address {
-            font-family: monospace;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            word-break: break-all;
+        .tab-content.active {
+            display: block;
+        }
+        
+        .mining-progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .mining-progress-bar {
+            background: linear-gradient(90deg, #28a745, #20c997);
+            height: 100%;
+            width: 65%;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>⛏️ TonEarn</h1>
+        <!-- Главная вкладка -->
+        <div id="main-tab" class="tab-content active">
+            <div class="card">
+                <h1>🏆 TonEarn</h1>
+                <div class="user-info">
+                    <p>👤 Ваш ID: <b id="user-id">...</b></p>
+                    <p>💰 Баланс: <b id="balance">1.500000 TON</b></p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">0.250000</div>
+                        <div class="stat-label">Накопано</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1.500000</div>
+                        <div class="stat-label">Депозиты</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Рефералов</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">1.45%</div>
+                        <div class="stat-label">Процент</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="showTab('mining')">🚀 Быстрый майнинг</button>
+                <button class="btn" onclick="showTab('deposit')">💰 Пополнить сейчас</button>
+            </div>
+        </div>
         
-        <div class="card">
-            <div class="user-info">
-                <p>👤 Ваш ID: <b id="user-id">...</b></p>
-                <p>💰 Баланс: <b id="balance">0.000000 TON</b></p>
-                <p>⛏️ Накопано: <b id="mined">0.000000 TON</b></p>
+        <!-- Майнинг вкладка -->
+        <div id="mining-tab" class="tab-content">
+            <div class="card">
+                <h1>⛏️ Майнинг</h1>
+                <div class="user-info">
+                    <p>⏰ Следующая награда через: <b>7:32:15</b></p>
+                    <p>💎 Текущий процент: <b>1.45%</b></p>
+                    <p>💰 Ожидаемая награда: <b>0.02175 TON</b></p>
+                </div>
+                
+                <div class="mining-progress">
+                    <div class="mining-progress-bar"></div>
+                </div>
+                <p>Прогресс: <b>65%</b></p>
+                
+                <button class="btn" onclick="alert('Майнинг активирован!')">⚡ Активировать майнинг</button>
+                <button class="btn" onclick="alert('Бустер применен!')">🚀 Использовать бустер x2</button>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Часов работы</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">0.347</div>
+                        <div class="stat-label">Всего накоплено</div>
+                    </div>
+                </div>
             </div>
-            
-            <button class="btn" onclick="startMining()">🚀 Начать майнинг</button>
-            <button class="btn" onclick="toggleDeposit()">💰 Пополнить баланс</button>
-            <button class="btn" onclick="showReferrals()">👥 Рефералы</button>
-            
-            <div id="deposit-info" class="deposit-info">
-                <h3>💳 Пополнение баланса</h3>
-                <p>Отправьте TON на адрес:</p>
-                <div class="wallet-address">UQCH1F3tgQ8yyqYHxZyFBw6_Y3tfYu91KP5ko16mM7CPaWY5</div>
-                <p>В комментарии укажите ваш ID</p>
-                <p>Минимум: 0.1 TON</p>
+        </div>
+        
+        <!-- Рефералы вкладка -->
+        <div id="referrals-tab" class="tab-content">
+            <div class="card">
+                <h1>👥 Рефералы</h1>
+                <div class="user-info">
+                    <p>🔗 Ваша ссылка:</p>
+                    <p style="word-break: break-all; font-size: 12px;" id="referral-link">...</p>
+                    <p>👥 Приглашено: <b>3 человека</b></p>
+                    <p>💰 Заработано: <b>0.6 TON</b></p>
+                </div>
+                
+                <button class="btn" onclick="copyReferralLink()">📋 Копировать ссылку</button>
+                <button class="btn" onclick="alert('Реферальная статистика')">📊 Статистика</button>
+                
+                <div class="user-info">
+                    <p><strong>🎁 Бонусы:</strong></p>
+                    <p>• Вам: <b>0.2 TON</b> за каждого</p>
+                    <p>• Другу: <b>0.1 TON</b> на старт</p>
+                </div>
             </div>
+        </div>
+        
+        <!-- Профиль вкладка -->
+        <div id="profile-tab" class="tab-content">
+            <div class="card">
+                <h1>👤 Профиль</h1>
+                <div class="user-info">
+                    <p>🆔 ID: <b id="profile-user-id">...</b></p>
+                    <p>📅 Регистрация: <b>28.11.2024</b></p>
+                    <p>⭐ Уровень: <b>Новичок</b></p>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">1.500</div>
+                        <div class="stat-label">Баланс TON</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">0.347</div>
+                        <div class="stat-label">Заработано</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="showTab('deposit')">💳 Пополнить баланс</button>
+                <button class="btn" onclick="alert('Вывод средств')">💸 Вывести TON</button>
+                <button class="btn" onclick="alert('Настройки')">⚙️ Настройки</button>
+            </div>
+        </div>
+        
+        <!-- Пополнение вкладка (скрытая) -->
+        <div id="deposit-tab" class="tab-content">
+            <div class="card">
+                <h1>💳 Пополнение</h1>
+                <div class="user-info">
+                    <p>Отправьте TON на адрес:</p>
+                    <p style="word-break: break-all; font-family: monospace; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                        UQCH1F3tgQ8yyqYHxZyFBw6_Y3tfYu91KP5ko16mM7CPaWY5
+                    </p>
+                    <p>В комментарии укажите ваш ID</p>
+                    <p>Минимум: <b>0.1 TON</b></p>
+                </div>
+                
+                <button class="btn" onclick="copyWalletAddress()">📋 Копировать адрес</button>
+                <button class="btn" onclick="showTab('main')">← Назад</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Нижнее меню -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showTab('main')">
+            <div class="nav-icon">🏆</div>
+            <div class="nav-label">Главная</div>
+        </div>
+        <div class="nav-item" onclick="showTab('mining')">
+            <div class="nav-icon">⛏️</div>
+            <div class="nav-label">Майнинг</div>
+        </div>
+        <div class="nav-item" onclick="showTab('referrals')">
+            <div class="nav-icon">👥</div>
+            <div class="nav-label">Рефералы</div>
+        </div>
+        <div class="nav-item" onclick="showTab('profile')">
+            <div class="nav-icon">👤</div>
+            <div class="nav-label">Профиль</div>
         </div>
     </div>
 
     <script>
         // Инициализация Telegram Web App
         let tg = window.Telegram.WebApp;
-        
-        // Расширяем на весь экран
         tg.expand();
-        
-        // Показываем Main Button
-        tg.MainButton.setText("📱 Открыть в боте").show();
-        tg.MainButton.onClick(function() {
-            tg.close();
-        });
         
         // Получаем данные пользователя
         const user = tg.initDataUnsafe.user;
         if (user) {
             document.getElementById('user-id').textContent = user.id;
-            document.getElementById('balance').textContent = '1.500000 TON';
-            document.getElementById('mined').textContent = '0.250000 TON';
+            document.getElementById('profile-user-id').textContent = user.id;
+            document.getElementById('referral-link').textContent = 'https://t.me/tonearnro_bot?start=ref' + user.id;
         }
         
-        // Функции приложения
-        function startMining() {
-            tg.showPopup({
-                title: '⛏️ Майнинг запущен',
-                message: 'Майнинг начался! Следующая награда через 8 часов.',
-                buttons: [{ type: 'ok' }]
+        // Функции для вкладок
+        function showTab(tabName) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Убираем активный класс со всех кнопок меню
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Показываем выбранную вкладку
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Активируем соответствующую кнопку в меню (кроме deposit)
+            if (tabName !== 'deposit') {
+                document.querySelector(`.nav-item[onclick="showTab('${tabName}')"]`).classList.add('active');
+            }
+        }
+        
+        function copyReferralLink() {
+            const link = document.getElementById('referral-link').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Ссылка скопирована!');
             });
         }
         
-        function toggleDeposit() {
-            const depositInfo = document.getElementById('deposit-info');
-            depositInfo.style.display = depositInfo.style.display === 'none' ? 'block' : 'none';
-        }
-        
-        function showReferrals() {
-            const userId = user ? user.id : 'unknown';
-            tg.showPopup({
-                title: '👥 Реферальная программа',
-                message: 'Ваша ссылка: https://t.me/tonearnro_bot?start=ref' + userId + '\n\nБонус: 0.2 TON за каждого реферала',
-                buttons: [{ type: 'ok' }]
+        function copyWalletAddress() {
+            const address = 'UQCH1F3tgQ8yyqYHxZyFBw6_Y3tfYu91KP5ko16mM7CPaWY5';
+            navigator.clipboard.writeText(address).then(() => {
+                alert('Адрес скопирован!');
             });
         }
         
-        // Логируем успешную загрузку
-        console.log('TonEarn Mini App успешно загружен');
-        console.log('User ID:', user ? user.id : 'unknown');
+        // Показываем Main Button
+        tg.MainButton.setText("💎 Премиум").show();
+        tg.MainButton.onClick(function() {
+            tg.showPopup({
+                title: '💎 Премиум доступ',
+                message: 'Откройте все возможности TonEarn!',
+                buttons: [{ type: 'ok' }]
+            });
+        });
     </script>
 </body>
 </html>
