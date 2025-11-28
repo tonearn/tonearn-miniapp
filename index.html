@@ -389,7 +389,7 @@
 
                 <div class="info-card">
                     <div class="stat-label">Имя пользователя</div>
-                    <div class="stat-value" id="user-username">@username</div>
+                    <div class="stat-value" id="user-username">CryptoMiner</div>
                     
                     <div class="stat-label">Статус майнинга</div>
                     <div class="stat-value" style="color: #f59f00;" id="mining-status">Активен ✓</div>
@@ -464,7 +464,7 @@
             total_deposits: 0.500000,
             total_mined: 0.750500,
             user_id: 5855368265,
-            username: "@cryptominer", // Добавлено поле username
+            username: "CryptoMiner", // Обычное имя пользователя
             mining_started: true,
             mining_percentage: 1.45,
             pending_mining: 0.042750,
@@ -538,7 +538,7 @@
             
             // Обновляем профиль
             document.getElementById('profile-id').textContent = `USER_${userData.user_id}`;
-            document.getElementById('user-username').textContent = userData.username; // Теперь отображаем username
+            document.getElementById('user-username').textContent = userData.username; // Отображаем ник пользователя
             document.getElementById('deposit-user-id').textContent = userData.user_id;
             document.getElementById('reg-date').textContent = userData.registered;
             document.getElementById('mining-status').textContent = userData.mining_started ? 'Активен ✓' : 'Не активен';
