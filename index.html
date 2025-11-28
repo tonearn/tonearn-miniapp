@@ -455,10 +455,7 @@
     </div>
 
     <script>
-        // Telegram Web App интеграция для получения реальных данных пользователя
-        let tg = window.Telegram?.WebApp;
-        
-        // Данные пользователя (будут заполнены из Telegram)
+        // Данные пользователя
         let userData = {
             balance: 1.250500,
             total_deposits: 0.500000,
@@ -474,22 +471,35 @@
 
         let timeLeft = 2 * 3600 + 45 * 60 + 30; // 2 часа 45 минут 30 секунд
 
-        // Получение реальных данных пользователя из Telegram
-        function initTelegramUser() {
-            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const telegramUser = tg.initDataUnsafe.user;
-                
-                // Используем никнейм пользователя
-                if (telegramUser.first_name) {
-                    userData.nickname = telegramUser.first_name;
+        // Получение данных пользователя из URL параметров (как это обычно делается в Telegram Mini Apps)
+        function initUserData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tgUser = urlParams.get('tg_user');
+            
+            if (tgUser) {
+                try {
+                    const user = JSON.parse(tgUser);
+                    if (user.first_name) {
+                        userData.nickname = user.first_name;
+                        if (user.last_name) {
+                            userData.nickname += ' ' + user.last_name;
+                        }
+                    }
+                    if (user.id) {
+                        userData.user_id = user.id;
+                    }
+                } catch (e) {
+                    console.log('Error parsing user data:', e);
                 }
-                
-                // Обновляем ID пользователя
-                userData.user_id = telegramUser.id;
-                
-                // Обновляем интерфейс
-                updateUI();
             }
+            
+            // Для тестирования - если нет данных из Telegram, используем тестовые данные
+            if (userData.nickname === "Гость") {
+                // Здесь можно установить тестовый ник для демонстрации
+                userData.nickname = "Алексей";
+            }
+            
+            updateUI();
         }
 
         // Функции взаимодействия
@@ -635,10 +645,8 @@
 
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            // Инициализируем данные пользователя из Telegram
-            initTelegramUser();
-            
-            updateUI();
+            // Инициализируем данные пользователя
+            initUserData();
             
             // Обновляем таймер каждую секунду
             setInterval(updateTimer, 1000);
