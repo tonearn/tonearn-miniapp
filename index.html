@@ -331,41 +331,6 @@
             transition: width 0.5s ease;
         }
 
-        .loading-steps {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-            width: 100%;
-            max-width: 280px;
-        }
-
-        .loading-step {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-            width: 100%;
-            font-size: 14px;
-            color: #666;
-            transition: color 0.3s ease;
-        }
-
-        .loading-step.active {
-            color: #333;
-            font-weight: 600;
-        }
-
-        .loading-step.completed {
-            color: #27ae60;
-        }
-
-        .loading-step-icon {
-            margin-right: 10px;
-            font-size: 16px;
-            width: 20px;
-            text-align: center;
-        }
-
         .error-message {
             background: #ffeaa7;
             border: 1px solid #fdcb6e;
@@ -690,24 +655,9 @@
                         <div class="progress-loader-fill" id="loading-progress"></div>
                     </div>
                     
-                    <div class="loading-steps">
-                        <div class="loading-step" id="step-telegram">
-                            <div class="loading-step-icon">⏳</div>
-                            Подключение к Telegram...
-                        </div>
-                        <div class="loading-step" id="step-user">
-                            <div class="loading-step-icon">⏳</div>
-                            Загрузка данных пользователя...
-                        </div>
-                        <div class="loading-step" id="step-balance">
-                            <div class="loading-step-icon">⏳</div>
-                            Получение баланса...
-                        </div>
-                        <div class="loading-step" id="step-complete">
-                            <div class="loading-step-icon">⏳</div>
-                            Завершение загрузки...
-                        </div>
-                    </div>
+                    <p style="margin-top: 30px; font-size: 14px; color: #999;">
+                        Загрузка...
+                    </p>
                 </div>
             </div>
         </div>
@@ -762,23 +712,6 @@
         function updateLoadingProgress(percent) {
             const progressBar = document.getElementById('loading-progress');
             progressBar.style.width = percent + '%';
-        }
-
-        function updateLoadingStep(stepId, status) {
-            const step = document.getElementById(stepId);
-            const icon = step.querySelector('.loading-step-icon');
-            
-            step.classList.remove('active', 'completed');
-            
-            if (status === 'active') {
-                step.classList.add('active');
-                icon.textContent = '⏳';
-            } else if (status === 'completed') {
-                step.classList.add('completed');
-                icon.textContent = '✅';
-            } else {
-                icon.textContent = '⏳';
-            }
         }
 
         // Инициализация Telegram Web App
@@ -836,67 +769,42 @@
             showSection('loading');
             
             // Начинаем процесс загрузки с прогресс-баром
-            updateLoadingProgress(10);
-            updateLoadingStep('step-telegram', 'active');
+            updateLoadingProgress(20);
             
             // Инициализируем Telegram Web App
             const tgAvailable = initTelegramWebApp();
             
-            await new Promise(resolve => setTimeout(resolve, 800));
-            updateLoadingProgress(30);
-            updateLoadingStep('step-telegram', 'completed');
-            updateLoadingStep('step-user', 'active');
-            
-            if (tgAvailable) {
-                const tgUser = getTelegramUserData();
-                if (tgUser) {
-                    userData.user_id = tgUser.user_id;
-                    userData.user_name = tgUser.user_name;
-                    userData.user_username = tgUser.user_username;
-                    
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                    updateLoadingProgress(60);
-                    updateLoadingStep('step-user', 'completed');
-                    updateLoadingStep('step-balance', 'active');
-                    
-                    // Загружаем данные из бота
-                    await loadBotData();
-                } else {
-                    showError("Не удалось получить данные пользователя из Telegram");
-                }
-            } else {
-                // Режим отладки вне Telegram
-                userData.user_id = generateUserId();
-                userData.user_name = "Тестовый пользователь";
-                userData.user_username = "@testuser";
-                
-                await new Promise(resolve => setTimeout(resolve, 800));
-                updateLoadingProgress(60);
-                updateLoadingStep('step-user', 'completed');
-                updateLoadingStep('step-balance', 'active');
-                
-                // Загружаем тестовые данные
-                loadTestData();
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 800));
-            updateLoadingProgress(90);
-            updateLoadingStep('step-balance', 'completed');
-            updateLoadingStep('step-complete', 'active');
-            
-            updateUI();
-            
-            // Завершаем загрузку
-            await new Promise(resolve => setTimeout(resolve, 500));
-            updateLoadingProgress(100);
-            updateLoadingStep('step-complete', 'completed');
-            
-            // Плавный переход на главный экран после загрузки
+            // Быстрая загрузка данных
             setTimeout(() => {
-                document.getElementById('loading-section').classList.add('fade-in');
+                updateLoadingProgress(60);
+                
+                if (tgAvailable) {
+                    const tgUser = getTelegramUserData();
+                    if (tgUser) {
+                        userData.user_id = tgUser.user_id;
+                        userData.user_name = tgUser.user_name;
+                        userData.user_username = tgUser.user_username;
+                    }
+                } else {
+                    // Режим отладки вне Telegram
+                    userData.user_id = generateUserId();
+                    userData.user_name = "Тестовый пользователь";
+                    userData.user_username = "@testuser";
+                }
+                
+                // Загружаем данные из бота
+                loadBotData();
+                
+                updateLoadingProgress(100);
+                
+                // Плавный переход на главный экран после загрузки
                 setTimeout(() => {
-                    showSection('main');
-                }, 500);
+                    updateUI();
+                    document.getElementById('loading-section').classList.add('fade-in');
+                    setTimeout(() => {
+                        showSection('main');
+                    }, 300);
+                }, 300);
             }, 800);
 
             // Запускаем автоматическое обновление данных
@@ -904,12 +812,8 @@
         }
 
         // Загрузка данных из бота
-        async function loadBotData() {
+        function loadBotData() {
             try {
-                // В реальном приложении здесь будет API запрос к боту
-                // Имитируем загрузку данных с задержкой
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
                 // Тестовые данные для демонстрации
                 userData.balance = 1.5;
                 userData.total_deposits = 2.0;
@@ -944,18 +848,6 @@
             }
         }
 
-        // Загрузка тестовых данных
-        function loadTestData() {
-            userData.balance = 1.2;
-            userData.total_deposits = 1.5;
-            userData.total_mined = 0.3;
-            userData.referrals_count = 2;
-            userData.mining_started = false;
-            userData.mining_percentage = 0;
-            userData.pending_mining = 0;
-            userData.referral_code = `https://t.me/tonearnro_bot?start=ref${userData.user_id}`;
-        }
-
         // Автоматическое обновление данных
         function startAutoRefresh() {
             // Обновляем данные каждые 30 секунд
@@ -968,7 +860,7 @@
 
         // Обновление данных
         async function refreshData() {
-            await loadBotData();
+            loadBotData();
             updateUI();
         }
 
