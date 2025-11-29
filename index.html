@@ -312,24 +312,6 @@
             animation: pulse 2s infinite;
         }
 
-        .loading-dots {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            background: #ffd700;
-            border-radius: 50%;
-            margin: 0 5px;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-
         .progress-loader {
             width: 200px;
             height: 8px;
@@ -345,7 +327,43 @@
             height: 100%;
             background: linear-gradient(90deg, #ffd700 0%, #ffed4a 100%);
             border-radius: 4px;
-            animation: progress 2s ease-in-out infinite;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            width: 100%;
+            font-size: 14px;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+
+        .loading-step.active {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .loading-step.completed {
+            color: #27ae60;
+        }
+
+        .loading-step-icon {
+            margin-right: 10px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
         }
 
         .error-message {
@@ -431,20 +449,6 @@
             0% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.1); }
             100% { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        @keyframes bounce {
-            0%, 80%, 100% { 
-                transform: scale(0);
-            } 40% { 
-                transform: scale(1.0);
-            }
-        }
-
-        @keyframes progress {
-            0% { width: 0%; left: 0%; }
-            50% { width: 100%; left: 0%; }
-            100% { width: 0%; left: 100%; }
         }
 
         @keyframes fadeIn {
@@ -682,19 +686,28 @@
                     <h2 style="margin-bottom: 10px; color: #333;">TonEarn</h2>
                     <p style="margin-bottom: 30px; color: #666;">Майнинг TON каждые 8 часов</p>
                     
-                    <div class="loading-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                    </div>
-                    
                     <div class="progress-loader">
-                        <div class="progress-loader-fill"></div>
+                        <div class="progress-loader-fill" id="loading-progress"></div>
                     </div>
                     
-                    <p style="margin-top: 30px; font-size: 14px; color: #999;">
-                        Загрузка данных пользователя...
-                    </p>
+                    <div class="loading-steps">
+                        <div class="loading-step" id="step-telegram">
+                            <div class="loading-step-icon">⏳</div>
+                            Подключение к Telegram...
+                        </div>
+                        <div class="loading-step" id="step-user">
+                            <div class="loading-step-icon">⏳</div>
+                            Загрузка данных пользователя...
+                        </div>
+                        <div class="loading-step" id="step-balance">
+                            <div class="loading-step-icon">⏳</div>
+                            Получение баланса...
+                        </div>
+                        <div class="loading-step" id="step-complete">
+                            <div class="loading-step-icon">⏳</div>
+                            Завершение загрузки...
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -744,6 +757,29 @@
         let tg = null;
         let lastUpdateTime = 0;
         const UPDATE_INTERVAL = 30000; // 30 секунд
+
+        // Функции для управления загрузкой
+        function updateLoadingProgress(percent) {
+            const progressBar = document.getElementById('loading-progress');
+            progressBar.style.width = percent + '%';
+        }
+
+        function updateLoadingStep(stepId, status) {
+            const step = document.getElementById(stepId);
+            const icon = step.querySelector('.loading-step-icon');
+            
+            step.classList.remove('active', 'completed');
+            
+            if (status === 'active') {
+                step.classList.add('active');
+                icon.textContent = '⏳';
+            } else if (status === 'completed') {
+                step.classList.add('completed');
+                icon.textContent = '✅';
+            } else {
+                icon.textContent = '⏳';
+            }
+        }
 
         // Инициализация Telegram Web App
         function initTelegramWebApp() {
@@ -799,11 +835,17 @@
             // Показываем экран загрузки при запуске
             showSection('loading');
             
+            // Начинаем процесс загрузки с прогресс-баром
+            updateLoadingProgress(10);
+            updateLoadingStep('step-telegram', 'active');
+            
             // Инициализируем Telegram Web App
             const tgAvailable = initTelegramWebApp();
             
-            // Имитируем задержку загрузки данных
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            await new Promise(resolve => setTimeout(resolve, 800));
+            updateLoadingProgress(30);
+            updateLoadingStep('step-telegram', 'completed');
+            updateLoadingStep('step-user', 'active');
             
             if (tgAvailable) {
                 const tgUser = getTelegramUserData();
@@ -811,6 +853,11 @@
                     userData.user_id = tgUser.user_id;
                     userData.user_name = tgUser.user_name;
                     userData.user_username = tgUser.user_username;
+                    
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    updateLoadingProgress(60);
+                    updateLoadingStep('step-user', 'completed');
+                    updateLoadingStep('step-balance', 'active');
                     
                     // Загружаем данные из бота
                     await loadBotData();
@@ -823,11 +870,26 @@
                 userData.user_name = "Тестовый пользователь";
                 userData.user_username = "@testuser";
                 
+                await new Promise(resolve => setTimeout(resolve, 800));
+                updateLoadingProgress(60);
+                updateLoadingStep('step-user', 'completed');
+                updateLoadingStep('step-balance', 'active');
+                
                 // Загружаем тестовые данные
                 loadTestData();
             }
             
+            await new Promise(resolve => setTimeout(resolve, 800));
+            updateLoadingProgress(90);
+            updateLoadingStep('step-balance', 'completed');
+            updateLoadingStep('step-complete', 'active');
+            
             updateUI();
+            
+            // Завершаем загрузку
+            await new Promise(resolve => setTimeout(resolve, 500));
+            updateLoadingProgress(100);
+            updateLoadingStep('step-complete', 'completed');
             
             // Плавный переход на главный экран после загрузки
             setTimeout(() => {
@@ -835,7 +897,7 @@
                 setTimeout(() => {
                     showSection('main');
                 }, 500);
-            }, 500);
+            }, 800);
 
             // Запускаем автоматическое обновление данных
             startAutoRefresh();
