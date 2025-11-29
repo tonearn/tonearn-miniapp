@@ -95,7 +95,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 12px;
             margin-bottom: 20px;
         }
@@ -345,6 +345,20 @@
             color: #2e7d32;
             font-size: 16px;
         }
+
+        .fee-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .fee-info .stat-value {
+            color: #856404;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -390,10 +404,6 @@
                 <button class="action-btn" onclick="showSection('deposit')">
                     💰 Пополнить баланс
                 </button>
-
-                <button class="action-btn" onclick="refreshData()" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
-                    🔄 Обновить данные
-                </button>
             </div>
 
             <!-- Майнинг -->
@@ -418,17 +428,13 @@
                         <div class="stat-value" id="mining-percentage">0%</div>
                         <div class="stat-label">Текущий %</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="mining-power">0%</div>
-                        <div class="stat-label">Мощность</div>
-                    </div>
                 </div>
 
-                <button class="action-btn" onclick="sendBotCommand('collect_mining')" id="collect-btn" style="display: none;">
-                    💰 Собрать награду
+                <button class="action-btn" onclick="collectMining()" id="collect-btn" style="display: none;" disabled>
+                    ⏳ Собрать награду (ожидайте)
                 </button>
 
-                <button class="action-btn" onclick="sendBotCommand('start_mining')" id="start-btn">
+                <button class="action-btn" onclick="startMining()" id="start-btn">
                     ⚡ Начать майнинг
                 </button>
             </div>
@@ -546,13 +552,18 @@
                     <div class="input-group">
                         <label class="input-label">Сумма для вывода (TON):</label>
                         <input type="number" class="input-field" id="withdraw-amount" 
-                               placeholder="0.000000" step="0.000001" min="1.5" max="0">
+                               placeholder="0.000000" step="0.000001" min="1.5" max="0" oninput="calculateWithdrawFee()">
                         <div class="stat-label">Минимальная сумма: 1.5 TON</div>
                     </div>
 
+                    <div class="fee-info">
+                        <div class="stat-label">Комиссия за вывод (5%)</div>
+                        <div class="stat-value" id="withdraw-fee">0.000000 TON</div>
+                    </div>
+
                     <div class="withdraw-info">
-                        <div class="stat-label">Комиссия за вывод</div>
-                        <div class="stat-value">0%</div>
+                        <div class="stat-label">Вы получите</div>
+                        <div class="stat-value" id="withdraw-receive">0.000000 TON</div>
                     </div>
                 </div>
 
@@ -618,6 +629,7 @@
         let timeLeft = 8 * 3600; // 8 часов в секундах
         let timerInterval = null;
         let isMiningCompleted = false;
+        let miningStartTime = null;
         let tg = null;
 
         // Инициализация Telegram Web App
@@ -711,9 +723,6 @@
         // Загрузка данных из бота
         async function loadBotData() {
             try {
-                // В реальном приложении здесь будет API запрос к боту
-                // УБРАНО: Всплывающее уведомление при загрузке
-                
                 // Имитируем загрузку данных с задержкой
                 setTimeout(() => {
                     // Тестовые данные для демонстрации
@@ -725,8 +734,19 @@
                     userData.mining_percentage = 1.45;
                     userData.pending_mining = 0.029;
                     
+                    // Восстанавливаем время майнинга из localStorage
+                    const savedMiningTime = localStorage.getItem('miningStartTime');
+                    if (savedMiningTime) {
+                        miningStartTime = parseInt(savedMiningTime);
+                        const elapsed = Math.floor((Date.now() - miningStartTime) / 1000);
+                        timeLeft = Math.max(0, 8 * 3600 - elapsed);
+                        
+                        if (timeLeft <= 0) {
+                            isMiningCompleted = true;
+                        }
+                    }
+                    
                     updateUI();
-                    // УБРАНО: Всплывающее уведомление после загрузки
                 }, 1000);
                 
             } catch (error) {
@@ -744,8 +764,16 @@
             userData.mining_started = false;
             userData.mining_percentage = 0;
             userData.pending_mining = 0;
+        }
+
+        // Расчет комиссии за вывод
+        function calculateWithdrawFee() {
+            const amount = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+            const fee = amount * 0.05; // 5% комиссия
+            const receive = amount - fee;
             
-            // УБРАНО: Всплывающее уведомление в демо-режиме
+            document.getElementById('withdraw-fee').textContent = fee.toFixed(6) + ' TON';
+            document.getElementById('withdraw-receive').textContent = receive.toFixed(6) + ' TON';
         }
 
         // Обработка вывода средств
@@ -780,56 +808,22 @@
                 return;
             }
             
+            const fee = amount * 0.05;
+            const receive = amount - fee;
+            
             // Показываем подтверждение
-            if (confirm(`Подтвердите вывод:\n\nСумма: ${amount.toFixed(6)} TON\nАдрес: ${address}\n\nКомиссия: 0%`)) {
+            if (confirm(`Подтвердите вывод:\n\nСумма: ${amount.toFixed(6)} TON\nКомиссия (5%): ${fee.toFixed(6)} TON\nВы получите: ${receive.toFixed(6)} TON\nАдрес: ${address}`)) {
                 // В реальном приложении здесь будет отправка запроса на вывод
                 showNotification('✅ Запрос на вывод отправлен! Средства поступят в течение 24 часов.');
                 
                 // Очищаем форму
                 document.getElementById('withdraw-address').value = '';
                 document.getElementById('withdraw-amount').value = '';
+                document.getElementById('withdraw-fee').textContent = '0.000000 TON';
+                document.getElementById('withdraw-receive').textContent = '0.000000 TON';
                 
                 // Возвращаемся в профиль
                 setTimeout(() => showSection('profile'), 2000);
-            }
-        }
-
-        // Отправка команды боту
-        function sendBotCommand(command) {
-            if (tg) {
-                switch(command) {
-                    case 'start_mining':
-                        startMining();
-                        break;
-                    case 'collect_mining':
-                        collectMining();
-                        break;
-                    default:
-                        // Для других команд не показываем уведомление
-                        break;
-                }
-            } else {
-                // Режим демонстрации
-                switch(command) {
-                    case 'start_mining':
-                        startMining();
-                        break;
-                    case 'collect_mining':
-                        collectMining();
-                        break;
-                }
-            }
-        }
-
-        // Обновление данных
-        function refreshData() {
-            showNotification('🔄 Обновление данных...');
-            if (tg) {
-                loadBotData();
-            } else {
-                loadTestData();
-                updateUI();
-                showNotification('✅ Данные обновлены!');
             }
         }
 
@@ -851,6 +845,10 @@
             userData.mining_started = true;
             isMiningCompleted = false;
             timeLeft = 8 * 3600;
+            miningStartTime = Date.now();
+            
+            // Сохраняем время начала майнинга
+            localStorage.setItem('miningStartTime', miningStartTime.toString());
             
             // Запускаем таймер, если он еще не запущен
             if (!timerInterval) {
@@ -858,13 +856,18 @@
             }
             
             updateUI();
-            showNotification('⚡ Майнинг запущен!');
+            showNotification('⚡ Майнинг запущен! Награда будет доступна через 8 часов.');
             
             document.getElementById('start-btn').style.display = 'none';
             document.getElementById('collect-btn').style.display = 'block';
         }
 
         function collectMining() {
+            if (!isMiningCompleted) {
+                showNotification('❌ Майнинг еще не завершен! Подождите 8 часов.');
+                return;
+            }
+            
             if (userData.pending_mining <= 0) {
                 showNotification('❌ Нет доступной награды для сбора');
                 return;
@@ -876,6 +879,10 @@
             userData.mining_started = false;
             isMiningCompleted = false;
             timeLeft = 8 * 3600;
+            miningStartTime = null;
+            
+            // Удаляем сохраненное время майнинга
+            localStorage.removeItem('miningStartTime');
             
             // Останавливаем таймер
             if (timerInterval) {
@@ -936,7 +943,6 @@
             // Обновление раздела майнинга
             document.getElementById('mining-balance').textContent = userData.pending_mining.toFixed(6);
             document.getElementById('mining-percentage').textContent = userData.mining_percentage + '%';
-            document.getElementById('mining-power').textContent = userData.mining_started ? '100%' : '0%';
             
             // Обновление раздела рефералов
             document.getElementById('referral-balance').textContent = userData.referral_balance.toFixed(6);
@@ -962,6 +968,15 @@
             if (userData.mining_started) {
                 document.getElementById('start-btn').style.display = 'none';
                 document.getElementById('collect-btn').style.display = 'block';
+                
+                // Активируем кнопку сбора только когда майнинг завершен
+                if (isMiningCompleted) {
+                    document.getElementById('collect-btn').disabled = false;
+                    document.getElementById('collect-btn').innerHTML = '💰 Собрать награду';
+                } else {
+                    document.getElementById('collect-btn').disabled = true;
+                    document.getElementById('collect-btn').innerHTML = '⏳ Собрать награду (ожидайте)';
+                }
             } else {
                 document.getElementById('start-btn').style.display = 'block';
                 document.getElementById('collect-btn').style.display = 'none';
@@ -973,7 +988,8 @@
             if (timeLeft <= 0 || !userData.mining_started) {
                 if (timeLeft <= 0 && userData.mining_started && !isMiningCompleted) {
                     isMiningCompleted = true;
-                    showNotification('✅ Майнинг завершен! Соберите награду.');
+                    showNotification('✅ Майнинг завершен! Теперь вы можете собрать награду.');
+                    updateUI();
                 }
                 document.getElementById('timer').textContent = '08:00:00';
                 return;
