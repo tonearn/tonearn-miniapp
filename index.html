@@ -303,6 +303,48 @@
             color: #f59f00;
             font-weight: 600;
         }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 500;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ffd700;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #f59f00;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+        }
+
+        .withdraw-info {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .withdraw-info .stat-value {
+            color: #2e7d32;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -431,13 +473,11 @@
             <div class="section" id="profile-section">
                 <div class="balance-card">
                     <div class="balance-label">Ваш профиль</div>
-                    <!-- ИЗМЕНЕНИЕ: Заменили на user-name и user-level -->
                     <div class="user-name" id="user-name">Загрузка...</div>
                     <div class="user-level">PRO уровень</div>
                 </div>
 
                 <div class="info-card">
-                    <!-- ИЗМЕНЕНИЕ: "Никнейм" переименовано в "Юзернейм" -->
                     <div class="stat-label">Юзернейм</div>
                     <div class="stat-value" id="user-username">Загрузка...</div>
                     
@@ -452,7 +492,7 @@
                     💰 Пополнить баланс
                 </button>
 
-                <button class="action-btn" onclick="sendBotCommand('withdraw')">
+                <button class="action-btn" onclick="showSection('withdraw')">
                     💸 Вывести средства
                 </button>
             </div>
@@ -482,6 +522,45 @@
                 </button>
 
                 <button class="action-btn" onclick="showSection('main')">
+                    ← Назад
+                </button>
+            </div>
+
+            <!-- Вывод средств -->
+            <div class="section" id="withdraw-section">
+                <div class="balance-card">
+                    <div class="balance-label">Доступно для вывода</div>
+                    <div class="balance-amount" id="withdraw-available">0.000000</div>
+                    <div class="balance-currency">TON</div>
+                </div>
+
+                <div class="info-card">
+                    <div class="balance-label">💸 Вывод средств</div>
+                    
+                    <div class="input-group">
+                        <label class="input-label">Адрес TON кошелька:</label>
+                        <input type="text" class="input-field" id="withdraw-address" 
+                               placeholder="Введите ваш TON адрес" maxlength="48">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Сумма для вывода (TON):</label>
+                        <input type="number" class="input-field" id="withdraw-amount" 
+                               placeholder="0.000000" step="0.000001" min="1.5" max="0">
+                        <div class="stat-label">Минимальная сумма: 1.5 TON</div>
+                    </div>
+
+                    <div class="withdraw-info">
+                        <div class="stat-label">Комиссия за вывод</div>
+                        <div class="stat-value">0%</div>
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="processWithdraw()" id="withdraw-btn">
+                    💰 Вывести средства
+                </button>
+
+                <button class="action-btn" onclick="showSection('profile')">
                     ← Назад
                 </button>
             </div>
@@ -526,8 +605,8 @@
             total_deposits: 0,
             total_mined: 0,
             user_id: null,
-            user_name: "Пользователь", // ИЗМЕНЕНИЕ: Добавили user_name
-            user_username: "Гость", // ИЗМЕНЕНИЕ: Добавили user_username
+            user_name: "Пользователь",
+            user_username: "Гость",
             mining_started: false,
             mining_percentage: 0,
             pending_mining: 0,
@@ -568,7 +647,6 @@
             try {
                 const user = tg.initDataUnsafe.user;
                 if (user) {
-                    // ИЗМЕНЕНИЕ: Формируем имя пользователя и юзернейм отдельно
                     let userName = user.first_name || "Пользователь";
                     if (user.last_name) {
                         userName += " " + user.last_name;
@@ -578,8 +656,8 @@
                     
                     return {
                         user_id: user.id,
-                        user_name: userName, // ИЗМЕНЕНИЕ: Имя пользователя
-                        user_username: userUsername, // ИЗМЕНЕНИЕ: Юзернейм
+                        user_name: userName,
+                        user_username: userUsername,
                         first_name: user.first_name,
                         last_name: user.last_name,
                         username: user.username
@@ -602,8 +680,8 @@
                 const tgUser = getTelegramUserData();
                 if (tgUser) {
                     userData.user_id = tgUser.user_id;
-                    userData.user_name = tgUser.user_name; // ИЗМЕНЕНИЕ: Сохраняем имя
-                    userData.user_username = tgUser.user_username; // ИЗМЕНЕНИЕ: Сохраняем юзернейм
+                    userData.user_name = tgUser.user_name;
+                    userData.user_username = tgUser.user_username;
                     
                     // Генерируем реферальную ссылку
                     userData.referral_code = `https://t.me/tonearnro_bot?start=ref${tgUser.user_id}`;
@@ -617,8 +695,8 @@
             } else {
                 // Режим отладки вне Telegram
                 userData.user_id = generateUserId();
-                userData.user_name = "Тестовый пользователь"; // ИЗМЕНЕНИЕ
-                userData.user_username = "@testuser"; // ИЗМЕНЕНИЕ
+                userData.user_name = "Тестовый пользователь";
+                userData.user_username = "@testuser";
                 userData.referral_code = `https://t.me/tonearnro_bot?start=ref${userData.user_id}`;
                 document.getElementById('referral-code').textContent = userData.referral_code;
                 
@@ -634,8 +712,7 @@
         async function loadBotData() {
             try {
                 // В реальном приложении здесь будет API запрос к боту
-                // Показываем уведомление о необходимости использовать команду в боте
-                showNotification('📱 Используйте команду /data в боте для получения актуальных данных');
+                // УБРАНО: Всплывающее уведомление при загрузке
                 
                 // Имитируем загрузку данных с задержкой
                 setTimeout(() => {
@@ -649,7 +726,7 @@
                     userData.pending_mining = 0.029;
                     
                     updateUI();
-                    showNotification('✅ Данные загружены!');
+                    // УБРАНО: Всплывающее уведомление после загрузки
                 }, 1000);
                 
             } catch (error) {
@@ -668,13 +745,58 @@
             userData.mining_percentage = 0;
             userData.pending_mining = 0;
             
-            showNotification('🔧 Режим демонстрации');
+            // УБРАНО: Всплывающее уведомление в демо-режиме
+        }
+
+        // Обработка вывода средств
+        function processWithdraw() {
+            const address = document.getElementById('withdraw-address').value.trim();
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const available = userData.balance - userData.pending_mining - userData.total_deposits;
+            
+            // Валидация
+            if (!address) {
+                showNotification('❌ Введите адрес TON кошелька');
+                return;
+            }
+            
+            if (address.length < 10) {
+                showNotification('❌ Адрес кошелька слишком короткий');
+                return;
+            }
+            
+            if (!amount || amount <= 0) {
+                showNotification('❌ Введите корректную сумму');
+                return;
+            }
+            
+            if (amount < 1.5) {
+                showNotification('❌ Минимальная сумма вывода: 1.5 TON');
+                return;
+            }
+            
+            if (amount > available) {
+                showNotification(`❌ Недостаточно средств. Доступно: ${available.toFixed(6)} TON`);
+                return;
+            }
+            
+            // Показываем подтверждение
+            if (confirm(`Подтвердите вывод:\n\nСумма: ${amount.toFixed(6)} TON\nАдрес: ${address}\n\nКомиссия: 0%`)) {
+                // В реальном приложении здесь будет отправка запроса на вывод
+                showNotification('✅ Запрос на вывод отправлен! Средства поступят в течение 24 часов.');
+                
+                // Очищаем форму
+                document.getElementById('withdraw-address').value = '';
+                document.getElementById('withdraw-amount').value = '';
+                
+                // Возвращаемся в профиль
+                setTimeout(() => showSection('profile'), 2000);
+            }
         }
 
         // Отправка команды боту
         function sendBotCommand(command) {
             if (tg) {
-                // В реальном приложении используем tg.sendData для отправки команды
                 switch(command) {
                     case 'start_mining':
                         startMining();
@@ -682,11 +804,9 @@
                     case 'collect_mining':
                         collectMining();
                         break;
-                    case 'withdraw':
-                        showNotification('💸 Для вывода используйте команду /withdraw в боте');
-                        break;
                     default:
-                        showNotification(`📱 Используйте команду /${command} в боте`);
+                        // Для других команд не показываем уведомление
+                        break;
                 }
             } else {
                 // Режим демонстрации
@@ -696,9 +816,6 @@
                         break;
                     case 'collect_mining':
                         collectMining();
-                        break;
-                    case 'withdraw':
-                        showNotification('💸 Демо: Функция вывода средств');
                         break;
                 }
             }
@@ -825,12 +942,17 @@
             document.getElementById('referral-balance').textContent = userData.referral_balance.toFixed(6);
             document.getElementById('referral-count').textContent = userData.referrals_count;
             
-            // ИЗМЕНЕНИЕ: Обновление профиля - разделили имя и юзернейм
+            // Обновление профиля
             document.getElementById('user-name').textContent = userData.user_name;
             document.getElementById('user-username').textContent = userData.user_username;
             document.getElementById('profile-user-id').textContent = userData.user_id || "Не определен";
             document.getElementById('deposit-user-id').textContent = userData.user_id || "Не определен";
             document.getElementById('mining-status').textContent = userData.mining_started ? 'Активен ✓' : 'Не активен';
+            
+            // Обновление раздела вывода
+            const availableForWithdraw = Math.max(0, userData.balance - userData.pending_mining - userData.total_deposits);
+            document.getElementById('withdraw-available').textContent = availableForWithdraw.toFixed(6);
+            document.getElementById('withdraw-amount').max = availableForWithdraw;
             
             // Обновление прогресса майнинга
             const progress = userData.mining_started ? (100 - (timeLeft / (8 * 3600)) * 100) : 0;
@@ -895,6 +1017,7 @@
                 'referrals': '👥 Рефералы',
                 'profile': '👤 Профиль',
                 'deposit': '💰 Пополнение',
+                'withdraw': '💸 Вывод средств',
                 'loading': '⏳ Загрузка'
             };
             
@@ -904,6 +1027,7 @@
                 'referrals': 'Реферальная программа',
                 'profile': 'Ваш профиль',
                 'deposit': 'Пополнение баланса',
+                'withdraw': 'Вывод средств на кошелек',
                 'loading': 'Получаем данные...'
             };
             
