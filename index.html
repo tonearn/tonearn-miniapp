@@ -290,6 +290,19 @@
             margin: 10px 0;
             color: #e17055;
         }
+        
+        .user-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .user-level {
+            font-size: 16px;
+            color: #f59f00;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -418,13 +431,15 @@
             <div class="section" id="profile-section">
                 <div class="balance-card">
                     <div class="balance-label">Ваш профиль</div>
-                    <div class="balance-amount" id="profile-nickname">Загрузка...</div>
-                    <div class="balance-currency">PRO уровень</div>
+                    <!-- ИЗМЕНЕНИЕ: Заменили на user-name и user-level -->
+                    <div class="user-name" id="user-name">Загрузка...</div>
+                    <div class="user-level">PRO уровень</div>
                 </div>
 
                 <div class="info-card">
-                    <div class="stat-label">Никнейм</div>
-                    <div class="stat-value" id="user-nickname">Загрузка...</div>
+                    <!-- ИЗМЕНЕНИЕ: "Никнейм" переименовано в "Юзернейм" -->
+                    <div class="stat-label">Юзернейм</div>
+                    <div class="stat-value" id="user-username">Загрузка...</div>
                     
                     <div class="stat-label">Статус майнинга</div>
                     <div class="stat-value" style="color: #f59f00;" id="mining-status">Не активен</div>
@@ -511,7 +526,8 @@
             total_deposits: 0,
             total_mined: 0,
             user_id: null,
-            nickname: "Гость",
+            user_name: "Пользователь", // ИЗМЕНЕНИЕ: Добавили user_name
+            user_username: "Гость", // ИЗМЕНЕНИЕ: Добавили user_username
             mining_started: false,
             mining_percentage: 0,
             pending_mining: 0,
@@ -552,9 +568,18 @@
             try {
                 const user = tg.initDataUnsafe.user;
                 if (user) {
+                    // ИЗМЕНЕНИЕ: Формируем имя пользователя и юзернейм отдельно
+                    let userName = user.first_name || "Пользователь";
+                    if (user.last_name) {
+                        userName += " " + user.last_name;
+                    }
+                    
+                    let userUsername = user.username ? "@" + user.username : "Не указан";
+                    
                     return {
                         user_id: user.id,
-                        nickname: user.username ? "@" + user.username : user.first_name || "Пользователь",
+                        user_name: userName, // ИЗМЕНЕНИЕ: Имя пользователя
+                        user_username: userUsername, // ИЗМЕНЕНИЕ: Юзернейм
                         first_name: user.first_name,
                         last_name: user.last_name,
                         username: user.username
@@ -577,7 +602,8 @@
                 const tgUser = getTelegramUserData();
                 if (tgUser) {
                     userData.user_id = tgUser.user_id;
-                    userData.nickname = tgUser.nickname;
+                    userData.user_name = tgUser.user_name; // ИЗМЕНЕНИЕ: Сохраняем имя
+                    userData.user_username = tgUser.user_username; // ИЗМЕНЕНИЕ: Сохраняем юзернейм
                     
                     // Генерируем реферальную ссылку
                     userData.referral_code = `https://t.me/tonearnro_bot?start=ref${tgUser.user_id}`;
@@ -591,7 +617,8 @@
             } else {
                 // Режим отладки вне Telegram
                 userData.user_id = generateUserId();
-                userData.nickname = "Тестовый пользователь";
+                userData.user_name = "Тестовый пользователь"; // ИЗМЕНЕНИЕ
+                userData.user_username = "@testuser"; // ИЗМЕНЕНИЕ
                 userData.referral_code = `https://t.me/tonearnro_bot?start=ref${userData.user_id}`;
                 document.getElementById('referral-code').textContent = userData.referral_code;
                 
@@ -798,9 +825,9 @@
             document.getElementById('referral-balance').textContent = userData.referral_balance.toFixed(6);
             document.getElementById('referral-count').textContent = userData.referrals_count;
             
-            // Обновление профиля
-            document.getElementById('profile-nickname').textContent = userData.nickname;
-            document.getElementById('user-nickname').textContent = userData.nickname;
+            // ИЗМЕНЕНИЕ: Обновление профиля - разделили имя и юзернейм
+            document.getElementById('user-name').textContent = userData.user_name;
+            document.getElementById('user-username').textContent = userData.user_username;
             document.getElementById('profile-user-id').textContent = userData.user_id || "Не определен";
             document.getElementById('deposit-user-id').textContent = userData.user_id || "Не определен";
             document.getElementById('mining-status').textContent = userData.mining_started ? 'Активен ✓' : 'Не активен';
